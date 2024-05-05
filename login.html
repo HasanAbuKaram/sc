@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login with MSAL.js</title>
+    <script src="https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.min.js"></script>
+</head>
+<body>
+    <button id="loginButton">Login</button>
+    <button id="logoutButton" style="display: none;">Logout</button>
+
+    <div id="message"></div>
+
+    <script>
+        // Initialize MSAL.js
+        const msalConfig = {
+            auth: {
+                clientId: "1c412488-b824-49c3-aa63-af78a0743b26", // replace with your app client id
+                authority: "https://login.microsoftonline.com/d33520e6-0dd4-4718-b1df-356beb84e0c5", // replace with your tenant id
+        //        redirectUri: window.location.href, // current page
+            },
+            cache: {
+                cacheLocation: "localStorage",
+                storeAuthStateInCookie: false,
+            }
+        };
+
+        const myMSALObj = new msal.PublicClientApplication(msalConfig);
+
+        // Check login status on page load
+        const accounts = myMSALObj.getAllAccounts();
+        if (accounts.length > 0) {
+            // User is logged in
+            document.querySelector("#message").innerHTML = "Hello, " + accounts[0].name + "!";
+            document.querySelector("#loginButton").style.display = "none";
+            document.querySelector("#logoutButton").style.display = "block";
+        }
+
+        // Handle login button click
+        document.querySelector("#loginButton").addEventListener("click", function() {
+            myMSALObj.loginPopup()
+                .then(response => {
+                // Login successful
+                console.log(response);
+                document.querySelector("#message").innerHTML = "Hello, " + response.account.name + "!";
+                document.querySelector("#loginButton").style.display = "none";
+                document.querySelector("#logoutButton").style.display = "block";
+
+                myMSALObj.setActiveAccount(response.account) // Set the account object from the login response as the active account
+                myMSALObj.acquireTokenSilent({
+                            scopes: ["https://graph.microsoft.com/.default"] // replace with your tenant name
+                        //  account: response.account // Pass the account object from the login response if did not use the setActiveAccount
+                        })
+                        .then(response => {
+                            // Access token acquired
+                            let accessToken = response.accessToken;
+                            console.log("Access token acquired:", accessToken);
+                        })
+                        .catch(error => {
+                            console.error("Failed to acquire access token:", error);
+                        });
+
+            })
+            .catch(error => {
+            // Login failed
+            document.querySelector("#message").innerHTML = "Error: " + error.message;
+            });
+        });
+
+        // Handle logout button click
+        document.querySelector("#logoutButton").addEventListener("click", function() {
+            myMSALObj.logout();
+            location.reload();
+        });
+    </script>
+
+
+</body>
+</html>

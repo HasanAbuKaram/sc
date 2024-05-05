@@ -1,0 +1,1 @@
+https://api.github.com/repos/HasanAbuKaram/phoenix-app01/releases/latest
